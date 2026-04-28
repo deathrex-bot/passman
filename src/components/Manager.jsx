@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { ToastContainer, toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
+import { Sparkles } from 'lucide-react';
 
 const Manager = () => {
 
@@ -31,6 +32,19 @@ const Manager = () => {
             toast.error("Error: Could not connect to the database.")
         }
     }
+
+    function generatePassword(length) {
+        const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
+        let password = '';
+        const array = new Uint32Array(length);
+        window.crypto.getRandomValues(array);
+        
+        for (let i = 0; i < length; i++) {
+            password += charset[array[i] % charset.length];
+        }
+        
+        return password;
+}
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -179,10 +193,13 @@ const Manager = () => {
                 <div className="domain flex flex-col gap-5 w-fit">
                     <input value={form.site} onChange={handleChange} type="text" placeholder='Enter Website URL' name="site" id="" className='w-170 lg:w-250 rounded-2xl border-2 border-green-500 px-3 py-0.5 bg-white' />
                     <div className="userpass flex flex-col lg:flex-row lg justify-between">
-                        <input value={form.username} type="text" onChange={handleChange} placeholder='Enter Username' name="username" id="" className='rounded-2xl border-2 border-green-500 px-3 py-0.5 w-full lg:w-190 bg-white' />
-                        <div className="relative w-full lg:w-50 pt-4 lg:pt-0">
+                        <input value={form.username} type="text" onChange={handleChange} placeholder='Enter Username' name="username" id="" className='rounded-2xl border-2 border-green-500 px-3 py-0.5 w-full lg:w-170 bg-white' />
+                        <div className="relative w-full lg:w-70 pt-4 lg:pt-0">
                             <input value={form.password} ref={Passref} type="password" onChange={handleChange} placeholder='Enter Password' name="password" id="" className='rounded-2xl border-2 border-green-500 px-3 py-0.5 w-full bg-white' />
-                            <span className='absolute left-160 lg:left-42 top-5.5 lg:top-1.5 cursor-pointer' onClick={showPassword}>
+                            <span className='absolute left-120 lg:left-52 top-5.5 lg:top-1.5 cursor-pointer' onClick={() => setform({ ...form, password: generatePassword(14) })}>
+                                <Sparkles className='h-5 text-gray-300 hover:text-green-500' />
+                            </span>
+                            <span className='absolute left-160 lg:left-62 top-5.5 lg:top-1.5 cursor-pointer' onClick={showPassword}>
                                 <img ref={Eyeref} className='h-5' src="icons/eye.png" alt="eye icon" />
                             </span>
                         </div>
