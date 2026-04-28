@@ -17,7 +17,7 @@ const Signup = () => {
 
         const passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/;
         if (!passwordRegex.test(sign.Mpassword)) {
-            toast.error('Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character');
+            alert('Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character');
             return; // Stop the function here so the invalid password isn't saved
         }
         
