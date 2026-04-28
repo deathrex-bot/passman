@@ -20,6 +20,15 @@ const Manager = () => {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
             })
+            
+            if (req.status === 401 || req.status === 403) {
+                // Token is invalid, missing, or expired. Clear storage and force login.
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+                return;
+            }
+
             let responseData = await req.json()
             
             if (req.ok && Array.isArray(responseData)) {
@@ -47,12 +56,8 @@ const Manager = () => {
 }
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = '/login'; // Redirect to login if no token is found
-        } else {
-            getPasswords()
-        }
+        // The ProtectedRoute in App.jsx guarantees we have a token before this component mounts
+        getPasswords()
     }, []) //this will run only once when the component is mounted
 
 
