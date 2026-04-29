@@ -27,7 +27,20 @@ const Login = () => {
         body: JSON.stringify(Auth)
       });
 
-      let data = await res.json();
+      let data;
+      const contentType = res.headers.get('content-type');
+
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch (jsonError) {
+          const text = await res.text();
+          data = { error: text || 'Invalid JSON response' };
+        }
+      } else {
+        const text = await res.text();
+        data = { error: text || 'Non-JSON response received' };
+      }
 
       if (res.ok) {
         toast.success('Login successful');
@@ -176,7 +189,7 @@ const Login = () => {
             <span className="text-base font-bold text-[#10B981] uppercase tracking-wider">
               PassOP
             </span>
-            <span>© 2025 PassOP. Encrypted & Secure.</span>
+            <span>© {new Date().getFullYear()} PassOP. Encrypted & Secure.</span>
           </div>
           <div className="flex items-center gap-6 uppercase font-semibold text-slate-600 tracking-wide">
             <a href="#" className="hover:text-[#10B981]">PRIVACY</a>

@@ -231,7 +231,7 @@ const Signup = () => {
                         <span className="text-base font-bold text-[#10B981] uppercase tracking-wider">
                             PassOP
                         </span>
-                        <span>© 2025 PassOP. Encrypted & Secure.</span>
+                        <span>© {new Date().getFullYear()} PassOP. Encrypted & Secure.</span>
                     </div>
                     <div className="flex items-center gap-6 uppercase font-semibold text-slate-600 tracking-wide">
                         <a href="#" className="hover:text-[#10B981]">PRIVACY</a>

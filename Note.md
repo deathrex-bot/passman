@@ -237,8 +237,7 @@ Here is the diff to decode and verify the JWT expiry right before rendering the 
 // Create a ProtectedRoute component to act as a guard
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('token');
-  if (!token) {
-  
+
   const isTokenValid = (token) => {
     if (!token) return false;
     try {
@@ -253,14 +252,21 @@ const ProtectedRoute = ({ children }) => {
     }
   };
 
+  if (!token) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return <Navigate to="/login" replace />;
+  }
+
   if (!isTokenValid(token)) {
     localStorage.removeItem('token'); // Cleanup expired/invalid tokens
     localStorage.removeItem('user');
     return <Navigate to="/login" replace />;
   }
-  return children;
 
-  
+  return children;
+};
+
 How this flow works now:
 When a user accesses /, ProtectedRoute parses the second segment of the JWT (the payload) via window.atob().
 It checks the exp property against the current time. If it has expired, the user gets booted to /login before the Manager component even mounts.

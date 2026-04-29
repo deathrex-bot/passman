@@ -161,8 +161,7 @@ const Manager = () => {
 
     const editPassword = async (id) => {
         setform(passwordArray.find((item) => item.id === id)) // Find the password to be edited in the password array and set it as the new form state so that its values are shown in the form for editing
-        setpasswordArray(passwordArray.filter((item) => item.id !== id)); // Remove the password to be edited from the password array so that it doesn't show in the list while we are editing it (we will add it back to the array when we save the edited password)
-        
+
         // Delete the old entry from the database so it can be safely re-saved
         let res = await fetch(`${backendUrl}/`, {
             method: 'DELETE',
@@ -178,6 +177,12 @@ const Manager = () => {
             localStorage.removeItem('user');
             navigate('/login');
             return;
+        }
+
+        if (res.ok) {
+            setpasswordArray(passwordArray.filter((item) => item.id !== id)); // Remove the password to be edited from the password array so that it doesn't show in the list while we are editing it (we will add it back to the array when we save the edited password)
+        } else {
+            toast.error('Failed to delete password from the database');
         }
     }
 
