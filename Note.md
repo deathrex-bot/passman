@@ -6,6 +6,8 @@
 3. Creation of new user will happen at signup page 
     1. Use bcrypt library to hash the Mpassword before storing it in database
 
+4. Make a isLoading state
+
     <!-- Is it safe to store the actual passwords in plain text in the database, or should I encrypt them too? -->
 
     <!-- How can I show a real-time password strength indicator (weak, medium, strong) as the user types? -->
@@ -218,3 +220,48 @@ It uses jwt.verify() to check if the token is valid, wasn't tampered with, and h
 If it's invalid, it kicks the user out with a 403 Forbidden response.
 If it's valid, it unpacks the payload, attaches the user's ID to req.user = decoded.user, and calls next().
 The Final Route Runs: next() tells Express to move on to your actual async (req, res) function. Because of the middleware, your route can confidently use req.user.id to fetch only the passwords belonging to that specific user! -->
+
+<!-- ******************************************************************************************************* -->
+
+<!-- wait how about we try verifying the token expiry (e.g., decoding a JWT and checking the exp field) or relying on the server's 401/403 response -->
+
+<!-- You are spot on! Using a combination of both is actually the industry standard for a highly secure and seamless user experience. Here is why:
+
+Frontend JWT Expiry Check (App.jsx): Decoding the token and checking the exp field catches expired tokens instantly. It prevents the protected page from briefly rendering (UI flickering) and stops an unnecessary API call to the backend.
+Backend 401/403 Fallback (Manager.jsx): This is your ultimate source of truth. Even if a token hasn't expired, the backend might reject it (e.g., if the user changed their master password or the secret key rotated).
+You've already set up the 401/403 check perfectly in your Manager.jsx's getPasswords function. Let's add the frontend expiry check to your ProtectedRoute component in App.jsx.
+
+Here is the diff to decode and verify the JWT expiry right before rendering the route:
+
+
+// Create a ProtectedRoute component to act as a guard
+const ProtectedRoute = ({ children }) => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+  
+  const isTokenValid = (token) => {
+    if (!token) return false;
+    try {
+      // JWTs are divided into 3 parts separated by dots. The payload is the second part.
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      // Token `exp` is in seconds, while Date.now() is in milliseconds
+      return payload.exp * 1000 > Date.now();
+    } catch (error) {
+      return false; // If the token is malformed and fails to decode
+    }
+  };
+
+  if (!isTokenValid(token)) {
+    localStorage.removeItem('token'); // Cleanup expired/invalid tokens
+    localStorage.removeItem('user');
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+
+  
+How this flow works now:
+When a user accesses /, ProtectedRoute parses the second segment of the JWT (the payload) via window.atob().
+It checks the exp property against the current time. If it has expired, the user gets booted to /login before the Manager component even mounts.
+If they somehow bypass this (or their token becomes invalid during their session), the API requests in Manager.jsx will receive a 401 or 403 status from the backend, which will clear the storage and redirect them to /login securely. -->
