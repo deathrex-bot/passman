@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Signup = () => {
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [sign, setsign] = useState({ Name: '', Email: '', Mpassword: '', Cpassword: '' })
@@ -17,16 +20,16 @@ const Signup = () => {
 
         const passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/;
         if (!passwordRegex.test(sign.Mpassword)) {
-            alert('Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character');
+            // alert('Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character');
+            toast.error(`Password must be at least 8 characters long and contain at least one uppercase letter, one number, and one special character`);
             return; // Stop the function here so the invalid password isn't saved
         }
-        
+
         if (sign.Mpassword !== sign.Cpassword) {
-            alert("Passwords do not match");
+            // alert("Passwords do not match");
+            toast.error(`Passwords do not match`);
             return; // Stops the function here so data isn't sent to the backend
         }
-
-        console.log("Submitting form data:", sign);
 
         try {
             let res = await fetch(`${backendUrl}/signup`, { //fetches the data from the backend
@@ -41,14 +44,17 @@ const Signup = () => {
             let data = await res.json(); //parses the response from the backend as JSON to get the actual data sent back (like success message or error message)
 
             if (res.ok) { //res.ok is a property of the response object that is true if the HTTP status code is in the 200-299 range, indicating a successful request.
-                alert("Account created successfully!");
-                window.location.href = '/login'; // Send user to login page
+                // alert("Account created successfully!");
+                toast.success('Account created successfully!');
+                navigate('/login'); // Send user to login page instantly without reloading
             } else {
-                alert("Failed to create account: " + (data.error || "Unknown error"));
+                // alert("Failed to create account: " + (data.error || "Unknown error"));
+                toast.error(`Failed to create account: ${data.error || "Unknown error"}`);
             }
         } catch (error) {
             console.error("Error signing up:", error);
-            alert("Error connecting to the server. Is your backend running?");
+            // alert("Error connecting to the server. Is your backend running?");
+            toast.error(`Error connecting to the server. Is your backend running?`);
         }
     }
 
@@ -211,9 +217,9 @@ const Signup = () => {
                             {/* Login Link */}
                             <p className="text-sm text-center text-slate-600">
                                 Already have an account?{' '}
-                                <a href="/login" className="font-bold text-[#10B981] hover:text-[#057857]">
+                                <Link to="/login" className="font-bold text-[#10B981] hover:text-[#057857]">
                                     Sign In
-                                </a>
+                                </Link>
                             </p>
                         </div>
                     </div>
@@ -225,7 +231,7 @@ const Signup = () => {
                         <span className="text-base font-bold text-[#10B981] uppercase tracking-wider">
                             PassOP
                         </span>
-                        <span>© 2024 PassOP. Encrypted & Secure.</span>
+                        <span>© {new Date().getFullYear()} PassOP. Encrypted & Secure.</span>
                     </div>
                     <div className="flex items-center gap-6 uppercase font-semibold text-slate-600 tracking-wide">
                         <a href="#" className="hover:text-[#10B981]">PRIVACY</a>

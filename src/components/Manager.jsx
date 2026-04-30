@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import { v4 as uuidv4 } from 'uuid';
 import { Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Manager = () => {
+    const navigate = useNavigate();
 
     const Eyeref = useRef()
     const Passref = useRef()
@@ -25,7 +27,7 @@ const Manager = () => {
                 // Token is invalid, missing, or expired. Clear storage and force login.
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
-                window.location.href = '/login';
+                navigate('/login');
                 return;
             }
 
@@ -83,7 +85,6 @@ const Manager = () => {
 
             // Create the individual new password object (reusing id if we are editing)
             const newPassword = { ...form, id: form.id ? form.id : uuidv4() }; //Make a copy of what the user typed in the form. If we are editing an old password, keep its old ID. If it's a new password, generate a brand new ID for it.
-            setpasswordArray([...passwordArray, newPassword]); //create a copy of the old password array and add the new password to it, then set it as the new state
             
             let res = await fetch(`${backendUrl}/`, { // Send the new password to the backend to be saved in the database
                 method: 'POST',
@@ -93,18 +94,31 @@ const Manager = () => {
                 },
                 body: JSON.stringify(newPassword) // Send the new password as a JSON string in the request body so that the backend can easily parse it and save it to the database
             })
-            //localStorage.setItem('passwords', JSON.stringify(newPasswordArray)); //save the new array to local storage
-            setform({ site: '', username: '', password: '' }) //reset the form
-            toast.success('Password saved', {
-                position: "top-right",
-                autoClose: 2000,
-                hideProgressBar: false,
-                closeOnClick: false,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-                theme: "dark",
-            });
+            
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                navigate('/login');
+                return;
+            }
+
+            if (res.ok) {
+                setpasswordArray([...passwordArray, newPassword]); //create a copy of the old password array and add the new password to it, then set it as the new state
+                //localStorage.setItem('passwords', JSON.stringify(newPasswordArray)); //save the new array to local storage
+                setform({ site: '', username: '', password: '' }) //reset the form
+                toast.success('Password saved', {
+                    position: "top-right",
+                    autoClose: 2000,
+                    hideProgressBar: false,
+                    closeOnClick: false,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "dark",
+                });
+            } else {
+                toast.error('Failed to save password to the database');
+            }
         }
         else {
             toast.error('Please fill all the fields')
@@ -114,7 +128,6 @@ const Manager = () => {
     const deletePassword = async(id) => {
         let c = confirm("Are you sure you want to delete this password?");
         if (c) {
-            console.log("Deleting password width id:", id)
             setpasswordArray(passwordArray.filter((item) => item.id !== id));
             let res = await fetch(`${backendUrl}/`, {
                 method: 'DELETE', // Send a DELETE request to the backend with the ID of the password to be deleted so that it can be removed from the database as well
@@ -124,6 +137,14 @@ const Manager = () => {
                 },
                 body: JSON.stringify({ id }) // Send the ID of the password to be deleted as a JSON string in the request body so that the backend can easily parse it and delete it from the database
             })
+
+            if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                navigate('/login');
+                return;
+            }
+
             // localStorage.setItem('passwords', JSON.stringify(passwordArray.filter((item) => item.id !== id)));
             toast.success('Password deleted', {
                 position: "top-right",
@@ -139,12 +160,10 @@ const Manager = () => {
     }
 
     const editPassword = async (id) => {
-        console.log("Editing password width id:", id)
         setform(passwordArray.find((item) => item.id === id)) // Find the password to be edited in the password array and set it as the new form state so that its values are shown in the form for editing
-        setpasswordArray(passwordArray.filter((item) => item.id !== id)); // Remove the password to be edited from the password array so that it doesn't show in the list while we are editing it (we will add it back to the array when we save the edited password)
-        
+
         // Delete the old entry from the database so it can be safely re-saved
-        await fetch(`${backendUrl}/`, {
+        let res = await fetch(`${backendUrl}/`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -152,6 +171,19 @@ const Manager = () => {
             },
             body: JSON.stringify({ id })
         })
+
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/login');
+            return;
+        }
+
+        if (res.ok) {
+            setpasswordArray(passwordArray.filter((item) => item.id !== id)); // Remove the password to be edited from the password array so that it doesn't show in the list while we are editing it (we will add it back to the array when we save the edited password)
+        } else {
+            toast.error('Failed to delete password from the database');
+        }
     }
 
 
@@ -177,19 +209,6 @@ const Manager = () => {
 
     return (
         <>
-            <ToastContainer
-                position="top-right"
-                autoClose={2000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick={false}
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="dark"
-            />
-
             <div className="absolute inset-0 -z-10 h-full w-full bg-green-50 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-\[size\:14px_24px\]"><div className="absolute left-0 right-0 top-0 -z-10 m-auto h-77.5 w-77.5 rounded-full bg-green-400 opacity-20 blur-[100px]"></div></div>
 
             <div className="container w-full mx-auto h-[84.1vh] flex flex-col items-center py-10">
